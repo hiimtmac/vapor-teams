@@ -1,20 +1,43 @@
 import Foundation
 
 /// Defines a card with a thumbnail image, title, text, and action buttons.
+///
+/// Compatibility:
+///  - Bots in Teams: ✔
+///  - Messaging Extensions: ✔
+///  - Connectors: ✖
+///  - Bot Framework: ✔
+///  - Teams: ✔
 public struct ThumbnailCard: CardType {    
     /// Array of CardAction objects that enable the user to perform one or more actions.
     /// The channel determines the number of buttons that you may specify.
-    let buttons: [CardAction]
+    public let buttons: [CardAction]
     /// Array of CardImage objects that specify thumbnail images to display on the card.
     /// The channel determines the number of thumbnail images that you may specify.
-    let images: [CardImage]
+    public let images: [CardImage]
     /// Subtitle to display under the card's title.
-    let subtitle: String
+    public let subtitle: String
     /// A CardAction object that specifies the action to perform if the user taps or clicks the card.
     /// This can be the same action as one of the buttons or a different action.
-    let tap: CardAction
+    public let tap: CardAction
     /// Description or prompt to display under the card's title or subtitle.
-    let text: String
+    public let text: String
     /// Title of the card.
-    let title: String
+    public let title: String
+    
+    public init(
+        buttons: [CardAction],
+        images: [CardImage],
+        subtitle: String,
+        tap: CardAction,
+        text: String,
+        title: String
+    ) {
+        self.buttons = buttons
+        self.images = images
+        self.subtitle = subtitle
+        self.tap = tap
+        self.text = text
+        self.title = title
+    }
 }

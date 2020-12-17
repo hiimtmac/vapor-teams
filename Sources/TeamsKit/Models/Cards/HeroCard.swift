@@ -1,6 +1,13 @@
 import Foundation
 
 /// Defines a card with a large image, title, text, and action buttons.
+///
+/// Compatibility:
+///  - Bots in Teams: ✔
+///  - Messaging Extensions: ✔
+///  - Connectors: ✖
+///  - Bot Framework: ✔
+///  - Teams: ✔
 public struct HeroCard: CardType {    
     /// Array of CardAction objects that enable the user to perform one or more actions.
     /// The channel determines the number of buttons that you may specify.
@@ -18,7 +25,14 @@ public struct HeroCard: CardType {
     /// Title of the card.
     public let title: String
     
-    public init(image: CardImage, title: String, subtitle: String, text: String, buttons: [CardAction], tap: CardAction?) {
+    public init(
+        image: CardImage,
+        title: String,
+        subtitle: String,
+        text: String,
+        buttons: [CardAction],
+        tap: CardAction?
+    ) {
         self.images = [image]
         self.title = title
         self.subtitle = subtitle

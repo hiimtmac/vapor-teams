@@ -2,6 +2,7 @@ import Vapor
 
 enum Env: String {
     case WEBHOOK_SECRET
+    case INCOMING_WEBHOOK
 }
 
 extension Environment {

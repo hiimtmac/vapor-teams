@@ -9,7 +9,6 @@ defer { application.shutdown() }
 application
     .grouped(OutgoingWebhookAuthenticator(secretKey: Environment.get(.WEBHOOK_SECRET)))
     .post("webhook") { (req: Request) throws -> Activity in
-        
         let message = try req.content.decode(Activity.self, using: JSONDecoder.teams)
         
         return Activity.message(

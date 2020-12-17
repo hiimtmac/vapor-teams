@@ -1,27 +1,54 @@
 import Foundation
 
 /// Defines a card that contains a receipt for a purchase.
+///
+/// Compatibility:
+///  - Bots in Teams: ✔
+///  - Messaging Extensions: ✔
+///  - Connectors: ✖
+///  - Bot Framework: ✔
+///  - Teams: ✔
 public struct ReceiptCard: CardType {
     /// Array of CardAction objects that enable the user to perform one or more actions.
     /// The channel determines the number of buttons that you may specify.
-    let buttons: [CardAction]
+    public let buttons: [CardAction]
     /// Array of Fact objects that specify information about the purchase.
     /// For example, the list of facts for a hotel stay receipt might include the check-in date and check-out date.
     /// The channel determines the number of facts that you may specify.
-    let facts: [Fact]
+    public let facts: [Fact]
     /// Array of ReceiptItem objects that specify the purchased items
-    let items: [ReceiptItem]
+    public let items: [ReceiptItem]
     /// A CardAction object that specifies the action to perform if the user taps or clicks the card.
     /// This can be the same action as one of the buttons or a different action.
-    let tap: CardAction
+    public let tap: CardAction
     /// A currency-formatted string that specifies the amount of tax applied to the purchase.
-    let tax: String
+    public let tax: String
     /// Title displayed at the top of the receipt.
-    let title: String
+    public let title: String
     /// A currency-formatted string that specifies the total purchase price, including all applicable taxes.
-    let total: String
+    public let total: String
     /// A currency-formatted string that specifies the amount of value-added tax (VAT) applied to the purchase price.
-    let vat: String
+    public let vat: String
+    
+    public init(
+        buttons: [CardAction],
+        facts: [Fact],
+        items: [ReceiptItem],
+        tap: CardAction,
+        tax: String,
+        title: String,
+        total: String,
+        vat: String
+    ) {
+        self.buttons = buttons
+        self.facts = facts
+        self.items = items
+        self.tap = tap
+        self.tax = tax
+        self.title = title
+        self.total = total
+        self.vat = vat
+    }
 }
 
 extension ReceiptCard {

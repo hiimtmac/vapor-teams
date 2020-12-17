@@ -3,22 +3,38 @@ import Foundation
 /// Defines a clickable action with a button.
 public struct CardAction: Codable {
     /// Channel-specific data associated with this action.
-    let channelData: String?
+    public let channelData: String?
     /// Text to display in the chat feed if the button is clicked.
-    let displayText: String?
+    public let displayText: String?
     /// Image URL which will appear on the button, next to the text label.
-    let image: URL?
+    public let image: URL?
     /// Text for the action.
-    let text: String?
+    public let text: String?
     /// Text description which appears on the button.
-    let title: String
+    public let title: String
     /// Type of action to perform.
-    let type: CardActionType
+    public let type: CardActionType
     /// Supplementary parameter for the action.
     /// The behavior of this property will vary according to the action type.
     /// For more information, see Add rich card attachments to messages.
     //https://github.com/Microsoft/botframework-sdk/blob/main/specs/botframework-activity/botframework-activity.md#message-back
 //    let value: object
+    
+    public init(
+        channelData: String?,
+        displayText: String?,
+        image: URL?,
+        text: String?,
+        title: String,
+        type: CardActionType
+    ) {
+        self.channelData = channelData
+        self.displayText = displayText
+        self.image = image
+        self.text = text
+        self.title = title
+        self.type = type
+    }
 }
 
 extension CardAction {

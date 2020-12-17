@@ -536,6 +536,22 @@ extension Activity {
             self.thumbnailUrl = thumbnailUrl
         }
         
+        public init(_ card: ListCard, name: String?, thumbnailUrl: URL?) {
+            self.content = .list(card)
+            self.contentType = "application/vnd.microsoft.card.list"
+            self.contentUrl = nil
+            self.name = name
+            self.thumbnailUrl = thumbnailUrl
+        }
+        
+        public init(_ card: O365ConnectorCard, name: String?, thumbnailUrl: URL?) {
+            self.content = .o365(card)
+            self.contentType = "application/vnd.microsoft.card.o365connector"
+            self.contentUrl = nil
+            self.name = name
+            self.thumbnailUrl = thumbnailUrl
+        }
+        
         public init(_ card: AnimationCard, name: String?, thumbnailUrl: URL?) {
             self.content = .animation(card)
             self.contentType = "application/vnd.microsoft.card.animation"
@@ -610,6 +626,10 @@ extension Activity {
                 switch contentType {
                 case "application/vnd.microsoft.card.adaptive":
                     self.content = .adaptive(try container.decode(AdaptiveCard.self, forKey: .content))
+                case "application/vnd.microsoft.teams.card.o365connector":
+                    self.content = .o365(try container.decode(O365ConnectorCard.self, forKey: .content))
+                case "application/vnd.microsoft.teams.card.list":
+                    self.content = .list(try container.decode(ListCard.self, forKey: .content))
                 case "application/vnd.microsoft.card.animation":
                     self.content = .animation(try container.decode(AnimationCard.self, forKey: .content))
                 case "application/vnd.microsoft.card.audio":
@@ -636,6 +656,8 @@ extension Activity {
 
         public enum Content: Encodable {
             case other(String)
+            case o365(O365ConnectorCard)
+            case list(ListCard)
             case adaptive(AdaptiveCard)
             case animation(AnimationCard)
             case audio(AudioCard)
@@ -649,6 +671,8 @@ extension Activity {
                 var container = encoder.unkeyedContainer()
                 switch self {
                 case .other(let content): try container.encode(content)
+                case .o365(let content): try container.encode(content)
+                case .list(let content): try container.encode(content)
                 case .adaptive(let content): try container.encode(content)
                 case .animation(let content): try container.encode(content)
                 case .audio(let content): try container.encode(content)
