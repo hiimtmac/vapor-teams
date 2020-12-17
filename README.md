@@ -4,7 +4,7 @@ A description of this package.
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/hiimtmac/teams-kit.git", .branch("master"))
+    .package(url: "https://github.com/hiimtmac/teams-kit.git", .branch("main"))
 ],
 targets: [
     .target(name: "Example", dependencies: [
