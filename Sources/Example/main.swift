@@ -5,28 +5,66 @@ import VaporTeams
 let application = try Application(.detect())
 defer { application.shutdown() }
 
-// Outgoing Webhook Example
+// MARK: - Outgoing webhook
+// https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-outgoing-webhook
+
+// MARK: Text response answer
 application
-    .grouped(OutgoingWebhookAuthenticator(secretKey: Environment.get(.WEBHOOK_SECRET)))
-    .post("webhook") { (req: Request) throws -> Activity in
+    .grouped(OutgoingWebhookAuthenticator(secretKey: Environment.get(.TEXT_SECRET)))
+    .post("outgoing-text") { (req: Request) throws -> Activity in
+        print(String(decoding: Data(buffer: req.body.data!), as: UTF8.self))
         let message = try req.content.decode(Activity.self, using: JSONDecoder.teams)
         
-        return Activity.message(
-            channelId: message.channelId,
-            from: .webhookResponse,
-            conversation: message.conversation,
-            entities: [.mention(.init(mentioned: message.from, text: nil))],
-            text: "**Hello!**, <at>\(message.from.name ?? "Unknown")</at>. From webooks\n>\(message.text ?? "Unknown message")",
-            textFormat: .markdown,
-            locale: nil,
-            speak: nil,
-            inputHint: nil,
-            summary: nil,
-            suggestedActions: nil,
-            expiration: nil,
-            listenFor: nil,
-            semanticAction: nil
-        )
+        let act = Activity.text(replyingTo: message)
+        
+//        print(String(decoding: try JSONEncoder.teams.encode(act), as: UTF8.self))
+        
+        return act
     }
+
+// MARK: Hero card answer
+application
+    .grouped(OutgoingWebhookAuthenticator(secretKey: Environment.get(.HERO_SECRET)))
+    .post("outgoing-hero") { (req: Request) throws -> Activity in
+        let message = try req.content.decode(Activity.self, using: JSONDecoder.teams)
+        
+        let act = Activity.hero(replyingTo: message)
+        
+//        print(String(decoding: try JSONEncoder.teams.encode(act), as: UTF8.self))
+        
+        return act
+    }
+
+// MARK: Thumbnail card answer
+application
+    .grouped(OutgoingWebhookAuthenticator(secretKey: Environment.get(.THUMBNAIL_SECRET)))
+    .post("outgoing-thumbnail") { (req: Request) throws -> Activity in
+        let message = try req.content.decode(Activity.self, using: JSONDecoder.teams)
+        
+        let act = Activity.thumbnail(replyingTo: message)
+        
+//        print(String(decoding: try JSONEncoder.teams.encode(act), as: UTF8.self))
+        
+        return act
+    }
+
+// MARK: - Incoming Webhook
+// https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-incoming-webhook
+// Make sure url is outlook.office365.com (teams made a url with outlook.office.com for me)
+
+// MARK: O365Connector Card
+application
+    .get("incoming-o365") { req -> EventLoopFuture<HTTPStatus> in
+        let connector = O365ConnectorCard.example()
+        let uri = URI(string: Environment.get(.INCOMING_WEBHOOK))
+                
+        return req.client.post(uri) { req in
+            try req.content.encode(connector)
+        }
+        .map { response in
+//            print(response)
+            return response.status
+        }
+}
 
 try application.run()

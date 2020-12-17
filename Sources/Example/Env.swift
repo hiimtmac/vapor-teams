@@ -1,7 +1,10 @@
 import Vapor
 
 enum Env: String {
-    case WEBHOOK_SECRET
+    case TEXT_SECRET
+    case HERO_SECRET
+    case THUMBNAIL_SECRET
+    
     case INCOMING_WEBHOOK
 }
 

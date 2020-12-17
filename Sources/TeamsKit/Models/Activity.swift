@@ -326,26 +326,30 @@ extension Activity {
     public static func message(
         channelId: String,
         from: ChannelAccount,
+        recipient: ChannelAccount?,
+        replyToId: String?,
         conversation: ConversationAccount,
         entities: [Entity]?,
         text: String?,
         textFormat: TextFormat?,
-        locale: String?,
-        speak: String?,
-        inputHint: InputHint?,
-        summary: String?,
-        suggestedActions: SuggestedActions?,
-        expiration: Date?,
-        importance: Importance = .normal,
-        deliveryMode: DeliveryMode = .normal,
-        listenFor: String?,
-        semanticAction: SemanticAction?
+        summary: String? = nil,
+        locale: String? = nil,
+        speak: String? = nil,
+        inputHint: InputHint? = nil,
+        suggestedActions: SuggestedActions? = nil,
+        expiration: Date? = nil,
+        importance: Importance? = nil,
+        deliveryMode: DeliveryMode? = nil,
+        listenFor: String? = nil,
+        semanticAction: SemanticAction? = nil
     ) -> Activity {
         self.init(
             type: .message,
             channelId: channelId,
             from: from,
+            recipient: recipient,
             conversation: conversation,
+            replyToId: replyToId,
             entities: entities,
             text: text,
             textFormat: textFormat,
@@ -365,27 +369,31 @@ extension Activity {
     public static func message(
         channelId: String,
         from: ChannelAccount,
+        recipient: ChannelAccount?,
+        replyToId: String?,
         conversation: ConversationAccount,
         entities: [Entity]?,
         text: String?,
         textFormat: TextFormat?,
-        locale: String?,
-        speak: String?,
-        inputHint: InputHint?,
         attachment: Attachment,
-        summary: String?,
-        suggestedActions: SuggestedActions?,
-        expiration: Date?,
-        importance: Importance = .normal,
-        deliveryMode: DeliveryMode = .normal,
-        listenFor: String?,
-        semanticAction: SemanticAction?
+        summary: String? = nil,
+        locale: String? = nil,
+        speak: String? = nil,
+        inputHint: InputHint? = nil,
+        suggestedActions: SuggestedActions? = nil,
+        expiration: Date? = nil,
+        importance: Importance? = nil,
+        deliveryMode: DeliveryMode? = nil,
+        listenFor: String? = nil,
+        semanticAction: SemanticAction? = nil
     ) -> Activity {
         self.init(
             type: .message,
             channelId: channelId,
             from: from,
+            recipient: recipient,
             conversation: conversation,
+            replyToId: replyToId,
             entities: entities,
             text: text,
             textFormat: textFormat,
@@ -406,28 +414,32 @@ extension Activity {
     public static func message(
         channelId: String,
         from: ChannelAccount,
+        recipient: ChannelAccount?,
+        replyToId: String?,
         conversation: ConversationAccount,
         entities: [Entity]?,
         text: String?,
         textFormat: TextFormat?,
-        locale: String?,
-        speak: String?,
-        inputHint: InputHint?,
         attachments: [Attachment],
         attachmentLayout: AttachmentLayout,
-        summary: String?,
-        suggestedActions: SuggestedActions?,
-        expiration: Date?,
-        importance: Importance = .normal,
-        deliveryMode: DeliveryMode = .normal,
-        listenFor: String?,
-        semanticAction: SemanticAction?
+        summary: String? = nil,
+        locale: String? = nil,
+        speak: String? = nil,
+        inputHint: InputHint? = nil,
+        suggestedActions: SuggestedActions? = nil,
+        expiration: Date? = nil,
+        importance: Importance? = nil,
+        deliveryMode: DeliveryMode? = nil,
+        listenFor: String? = nil,
+        semanticAction: SemanticAction? = nil
     ) -> Activity {
         self.init(
             type: .message,
             channelId: channelId,
             from: from,
+            recipient: recipient,
             conversation: conversation,
+            replyToId: replyToId,
             entities: entities,
             text: text,
             textFormat: textFormat,
@@ -501,189 +513,6 @@ extension Activity {
     public enum AttachmentLayout: String, Codable {
         case carousel
         case list
-    }
-}
-
-extension Activity {
-    /// Defines additional information to include in the message.
-    /// An attachment may be a file (such as an image, audio, or video) or a rich card.
-    /// A7100: Senders SHOULD NOT include both content and contentUrl fields in a single attachment.
-    public struct Attachment: Codable {
-        /// The content of the attachment.
-        public let content: Content?
-        /// The media type of the content in the attachment.
-        public let contentType: String
-        /// URL for the content of the attachment. Supported protocols are: HTTP, HTTPS, File, and Data.
-        public let contentUrl: URL?
-        /// Name of the attachment
-        public let name: String?
-        /// URL to a thumbnail image that the channel can use if it supports using an alternative, smaller form of content or contentUrl.
-        public let thumbnailUrl: URL?
-        
-        public init(_ url: URL, contentType: String, name: String?, thumbnailUrl: URL?) {
-            self.content = nil
-            self.contentType = contentType
-            self.contentUrl = url
-            self.name = name
-            self.thumbnailUrl = thumbnailUrl
-        }
-        
-        public init(_ card: AdaptiveCard, name: String?, thumbnailUrl: URL?) {
-            self.content = .adaptive(card)
-            self.contentType = "application/vnd.microsoft.card.adaptive"
-            self.contentUrl = nil
-            self.name = name
-            self.thumbnailUrl = thumbnailUrl
-        }
-        
-        public init(_ card: ListCard, name: String?, thumbnailUrl: URL?) {
-            self.content = .list(card)
-            self.contentType = "application/vnd.microsoft.card.list"
-            self.contentUrl = nil
-            self.name = name
-            self.thumbnailUrl = thumbnailUrl
-        }
-        
-        public init(_ card: O365ConnectorCard, name: String?, thumbnailUrl: URL?) {
-            self.content = .o365(card)
-            self.contentType = "application/vnd.microsoft.card.o365connector"
-            self.contentUrl = nil
-            self.name = name
-            self.thumbnailUrl = thumbnailUrl
-        }
-        
-        public init(_ card: AnimationCard, name: String?, thumbnailUrl: URL?) {
-            self.content = .animation(card)
-            self.contentType = "application/vnd.microsoft.card.animation"
-            self.contentUrl = nil
-            self.name = name
-            self.thumbnailUrl = thumbnailUrl
-        }
-        
-        public init(_ card: AudioCard, name: String?, thumbnailUrl: URL?) {
-            self.content = .audio(card)
-            self.contentType = "application/vnd.microsoft.card.audio"
-            self.contentUrl = nil
-            self.name = name
-            self.thumbnailUrl = thumbnailUrl
-        }
-        
-        public init(_ card: HeroCard, name: String?, thumbnailUrl: URL?) {
-            self.content = .hero(card)
-            self.contentType = "application/vnd.microsoft.card.hero"
-            self.contentUrl = nil
-            self.name = name
-            self.thumbnailUrl = thumbnailUrl
-        }
-        
-        public init(_ card: ReceiptCard, name: String?, thumbnailUrl: URL?) {
-            self.content = .receipt(card)
-            self.contentType = "application/vnd.microsoft.card.receipt"
-            self.contentUrl = nil
-            self.name = name
-            self.thumbnailUrl = thumbnailUrl
-        }
-        
-        public init(_ card: SignInCard, name: String?, thumbnailUrl: URL?) {
-            self.content = .signIn(card)
-            self.contentType = "application/vnd.microsoft.card.signin"
-            self.contentUrl = nil
-            self.name = name
-            self.thumbnailUrl = thumbnailUrl
-        }
-        
-        public init(_ card: ThumbnailCard, name: String?, thumbnailUrl: URL?) {
-            self.content = .thumbnail(card)
-            self.contentType = "application/vnd.microsoft.card.thumbnail"
-            self.contentUrl = nil
-            self.name = name
-            self.thumbnailUrl = thumbnailUrl
-        }
-        
-        public init(_ card: VideoCard, name: String?, thumbnailUrl: URL?) {
-            self.content = .video(card)
-            self.contentType = "application/vnd.microsoft.card.video"
-            self.contentUrl = nil
-            self.name = name
-            self.thumbnailUrl = thumbnailUrl
-        }
-        
-        enum CodingKeys: String, CodingKey {
-            case content
-            case contentType
-            case contentUrl
-            case name
-            case thumbnailUrl
-        }
-        
-        public init(from decoder: Decoder) throws {
-            let container = try decoder.container(keyedBy: CodingKeys.self)
-            let contentType = try container.decode(String.self, forKey: .contentType)
-            if let url = try container.decodeIfPresent(URL.self, forKey: .contentUrl) {
-                self.contentUrl = url
-                self.content = nil
-            } else {
-                switch contentType {
-                case "application/vnd.microsoft.card.adaptive":
-                    self.content = .adaptive(try container.decode(AdaptiveCard.self, forKey: .content))
-                case "application/vnd.microsoft.teams.card.o365connector":
-                    self.content = .o365(try container.decode(O365ConnectorCard.self, forKey: .content))
-                case "application/vnd.microsoft.teams.card.list":
-                    self.content = .list(try container.decode(ListCard.self, forKey: .content))
-                case "application/vnd.microsoft.card.animation":
-                    self.content = .animation(try container.decode(AnimationCard.self, forKey: .content))
-                case "application/vnd.microsoft.card.audio":
-                    self.content = .audio(try container.decode(AudioCard.self, forKey: .content))
-                case "application/vnd.microsoft.card.hero":
-                    self.content = .hero(try container.decode(HeroCard.self, forKey: .content))
-                case "application/vnd.microsoft.card.receipt":
-                    self.content = .receipt(try container.decode(ReceiptCard.self, forKey: .content))
-                case "application/vnd.microsoft.card.signin":
-                    self.content = .signIn(try container.decode(SignInCard.self, forKey: .content))
-                case "application/vnd.microsoft.card.thumbnail":
-                    self.content = .thumbnail(try container.decode(ThumbnailCard.self, forKey: .content))
-                case "application/vnd.microsoft.card.video":
-                    self.content = .video(try container.decode(VideoCard.self, forKey: .content))
-                default:
-                    self.content = .other(try container.decode(String.self, forKey: .content))
-                }
-                self.contentUrl = nil
-            }
-            self.contentType = contentType
-            self.name = try container.decodeIfPresent(String.self, forKey: .name)
-            self.thumbnailUrl = try container.decodeIfPresent(URL.self, forKey: .thumbnailUrl)
-        }
-
-        public enum Content: Encodable {
-            case other(String)
-            case o365(O365ConnectorCard)
-            case list(ListCard)
-            case adaptive(AdaptiveCard)
-            case animation(AnimationCard)
-            case audio(AudioCard)
-            case hero(HeroCard)
-            case receipt(ReceiptCard)
-            case signIn(SignInCard)
-            case thumbnail(ThumbnailCard)
-            case video(VideoCard)
-            
-            public func encode(to encoder: Encoder) throws {
-                var container = encoder.unkeyedContainer()
-                switch self {
-                case .other(let content): try container.encode(content)
-                case .o365(let content): try container.encode(content)
-                case .list(let content): try container.encode(content)
-                case .adaptive(let content): try container.encode(content)
-                case .animation(let content): try container.encode(content)
-                case .audio(let content): try container.encode(content)
-                case .hero(let content): try container.encode(content)
-                case .receipt(let content): try container.encode(content)
-                case .signIn(let content): try container.encode(content)
-                case .thumbnail(let content): try container.encode(content)
-                case .video(let content): try container.encode(content)
-                }
-            }
-        }
     }
 }
 

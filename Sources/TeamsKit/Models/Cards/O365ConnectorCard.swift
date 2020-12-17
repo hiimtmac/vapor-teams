@@ -37,7 +37,7 @@ public struct O365ConnectorCard: CardType {
     public let themeColor: String?
     /// Only applies to cards in email messages. When set to true, causes the HTML body of the message to be hidden.
     /// This is very useful in scenarios where the card is a better or more useful representation of the content than the HTML body itself, which is especially true when the card contains actions (see below.)
-    public let hideOriginalBody: Bool
+    public let hideOriginalBody: Bool?
     /// The title property is meant to be rendered in a prominent way, at the very top of the card.
     /// Use it to introduce the content of the card in such a way users will immediately know what to expect.
     public let title: String
@@ -71,7 +71,7 @@ public struct O365ConnectorCard: CardType {
         originator: String?,
         summary: String?,
         themeColor: String?,
-        hideOriginalBody: Bool,
+        hideOriginalBody: Bool?,
         title: String,
         text: String?,
         sections: [Section]?,
@@ -96,11 +96,11 @@ extension O365ConnectorCard {
     public struct Section: Codable {
         /// The title property of a section is displayed in a font that stands out while not as prominent as the card's title.
         /// It is meant to introduce the section and summarize its content, similarly to how the card's title property is meant to summarize the whole card.
-        public let title: String
+        public let title: String?
         /// When set to true, the startGroup property marks the start of a logical group of information.
         /// Typically, sections with startGroup set to true will be visually separated from previous card elements.
         /// For example, Outlook uses a subtle horizontal separation line.
-        public let startGroup: Bool
+        public let startGroup: Bool?
         /// Ex Use activityImage to display the picture of that person.
         public let activityImage: URL?
         /// Ex Use activityTitle to summarize what they did. Make it short and to the point.
@@ -124,18 +124,18 @@ extension O365ConnectorCard {
         public let potentialAction: [Action]?
         
         public init(
-            title: String,
-            startGroup: Bool,
-            activityImage: URL?,
-            activityTitle: String?,
-            activitySubtitle: String?,
-            activityText: String?,
-            heroImage: Image?,
-            text: String?,
-            facts: [Fact]?,
-            images: [Image]?,
-            potentialAction: [Action]?)
-        {
+            title: String? = nil,
+            activityImage: URL? = nil,
+            activityTitle: String? = nil,
+            activitySubtitle: String? = nil,
+            activityText: String? = nil,
+            heroImage: Image? = nil,
+            text: String? = nil,
+            facts: [Fact]? = nil,
+            images: [Image]? = nil,
+            potentialAction: [Action]? = nil,
+            startGroup: Bool? = nil
+        ) {
             self.title = title
             self.startGroup = startGroup
             self.activityImage = activityImage
@@ -156,6 +156,7 @@ extension O365ConnectorCard {
         case openUri = "OpenUri"
         case httpPost = "HttpPOST"
         case actionCard = "ActionCard"
+        case view = "ViewAction"
         case invokeAddInCommand = "InvokeAddInCommand"
     }
     
@@ -163,6 +164,7 @@ extension O365ConnectorCard {
         case openUri(OpenUriAction)
         case httpPost(HTTPPostAction)
         case actionCard(ActionCardAction)
+        case view(ViewAction)
         case invokeAddInCommand(InvokeAddInCommandAction)
         
         public init(from decoder: Decoder) throws {
@@ -172,22 +174,44 @@ extension O365ConnectorCard {
             case .openUri: self = .openUri(try OpenUriAction(from: decoder))
             case .httpPost: self = .httpPost(try HTTPPostAction(from: decoder))
             case .actionCard: self = .actionCard(try ActionCardAction(from: decoder))
+            case .view: self = .view(try ViewAction(from: decoder))
             case .invokeAddInCommand: self = .invokeAddInCommand(try InvokeAddInCommandAction(from: decoder))
             }
         }
         
         public func encode(to encoder: Encoder) throws {
-            var container = encoder.unkeyedContainer()
+            var container = encoder.singleValueContainer()
             switch self {
             case .openUri(let action): try container.encode(action)
             case .httpPost(let action): try container.encode(action)
             case .actionCard(let action): try container.encode(action)
+            case .view(let action): try container.encode(action)
             case .invokeAddInCommand(let action): try container.encode(action)
             }
         }
         
         enum CodingKeys: String, CodingKey {
             case type = "@type"
+        }
+        
+        public static func openUri(name: String, targets: [OpenUriAction.Target]) -> Self {
+            let action = OpenUriAction(name: name, targets: targets)
+            return .openUri(action)
+        }
+        
+        public static func httpPost(name: String, target: URL, headers: [HTTPPostAction.Header]?, body: String?, bodyContentType: String?, isPrimary: Bool) -> Self {
+            let action = HTTPPostAction(name: name, target: target, headers: headers, body: body, bodyContentType: bodyContentType, isPrimary: isPrimary)
+            return .httpPost(action)
+        }
+        
+        public static func actionCard(name: String, inputs: [ActionCardAction.Input]?, actions: [Action]?) -> Self {
+            let action = ActionCardAction(name: name, inputs: inputs, actions: actions)
+            return .actionCard(action)
+        }
+        
+        public static func view(name: String, target: [URL]) -> Self {
+            let action = ViewAction(name: name, target: target)
+            return .view(action)
         }
     }
     
@@ -271,19 +295,22 @@ extension O365ConnectorCard {
         /// A collection of Header objects representing a set of HTTP headers that will be emitted when sending the POST request to the target URL.
         public let headers: [Header]?
         /// The body of the POST request.
-        public let body: String
+        public let body: String?
         /// The bodyContentType is optional and specifies the MIME type of the body in the POST request.
         /// Some services require that a content type be specified.
         /// Valid values are application/json and application/x-www-form-urlencoded. If not specified, application/json is assumed.
         public let bodyContentType: String?
         
-        public init(name: String, target: URL, headers: [Header]?, body: String, bodyContentType: String?) {
+        public let isPrimary: Bool
+        
+        public init(name: String, target: URL, headers: [Header]?, body: String?, bodyContentType: String?, isPrimary: Bool) {
             self.type = .httpPost
             self.name = name
             self.target = target
             self.headers = headers
             self.body = body
             self.bodyContentType = bodyContentType
+            self.isPrimary = isPrimary
         }
         
         enum CodingKeys: String, CodingKey {
@@ -293,6 +320,7 @@ extension O365ConnectorCard {
             case headers
             case body
             case bodyContentType
+            case isPrimary
         }
         
         /// The Header object is a name/value pair that represents an HTTP header.
@@ -368,6 +396,27 @@ extension O365ConnectorCard {
         }
     }
     
+    public struct ViewAction: Codable {
+        public let type: ActionType
+        public let name: String
+        public let target: [URL]
+        public let context: String
+        
+        public init(name: String, target: [URL]) {
+            self.type = .view
+            self.name = name
+            self.target = target
+            self.context = "http://schema.org"
+        }
+        
+        enum CodingKeys: String, CodingKey {
+            case type = "@type"
+            case name
+            case target
+            case context = "@context"
+        }
+    }
+    
     /// Opens an Outlook add-in task pane. If the add-in is not installed, the user is prompted to install the add-in with a single click.
     ///
     /// When an InvokeAddInCommand action is executed, Outlook first checks if the requested add-in is installed and turned on for the user. If it is not, the user is notified that the action requires the add-in, and is able to install and enable the add-in with a single click.
@@ -406,9 +455,12 @@ extension O365ConnectorCard.Section {
         /// The URL to the image.
         public let image: URL
         /// A short description of the image.
-        public let title: String
+        public let title: String?
         
-        public init(image: URL, title: String) {
+        public init(
+            image: URL,
+            title: String? = nil
+        ) {
             self.image = image
             self.title = title
         }
@@ -472,7 +524,7 @@ extension O365ConnectorCard.ActionCardAction {
         }
         
         public func encode(to encoder: Encoder) throws {
-            var container = encoder.unkeyedContainer()
+            var container = encoder.singleValueContainer()
             switch self {
             case .text(let input): try container.encode(input)
             case .date(let input): try container.encode(input)
@@ -489,166 +541,183 @@ extension O365ConnectorCard.ActionCardAction {
             case date = "DateInput"
             case multichoice = "MultichoiceInput"
         }
+        
+        public static func text(id: String, isRequired: Bool?, title: String, value: String?, isMultiline: Bool, maxLength: Int?) -> Self {
+            let input = TextInput(id: id, isRequired: isRequired, title: title, value: value, isMultiline: isMultiline, maxLength: maxLength)
+            return .text(input)
+        }
+        
+        public static func date(id: String, isRequired: Bool?, title: String, value: String?, includeTime: Bool) -> Self {
+            let input = DateInput(id: id, isRequired: isRequired, title: title, value: value, includeTime: includeTime)
+            return .date(input)
+        }
+        
+        public static func multichoice(id: String, isRequired: Bool?, title: String, value: String?, choices: [MultichoiceInput.Choice], isMultiSelect: Bool?, style: MultichoiceInput.Style?) -> Self {
+            let input = MultichoiceInput(id: id, isRequired: isRequired, title: title, value: value, choices: choices, isMultiSelect: isMultiSelect, style: style)
+            return .multichoice(input)
+        }
+    }
+}
 
-        /// Use this input type when you need users to provide free text, such as the response to a survey question.\
-        ///
-        /// ```
-        /// {
-        ///   "@type": "TextInput",
-        ///   "id": "comment",
-        ///   "isMultiline": true,
-        ///   "title": "Input's title property"
-        /// }
-        /// ```
-        public struct TextInput: Codable {
-            /// must be TextInput, DateInput, or MultichoiceInput
-            public let type: InputType
-            /// Uniquely identifies the input so it is possible to reference it in the URL or body of an HttpPOST action. See Input value substitution.
-            public let id: String
-            /// Indicates whether users are required to type a value before they are able to take an action that would take the value of the input as a parameter.
-            public let isRequired: Bool?
-            /// Defines a title for the input.
-            public let title: String
-            /// Defines the initial value of the input. For multi-choice inputs, value must be equal to the value property of one of the input's choices.
-            public let value: String?
-            /// Indicates whether the text input should accept multiple lines of text.
-            public let isMultiline: Bool
-            /// Indicates the maximum number of characters that can be entered.
-            public let maxLength: Int
-            
-            public init(id: String, isRequired: Bool?, title: String, value: String?, isMultiline: Bool, maxLength: Int) {
-                self.type = .text
-                self.id = id
-                self.isRequired = isRequired
-                self.title = title
-                self.value = value
-                self.isMultiline = isMultiline
-                self.maxLength = maxLength
-            }
-            
-            enum CodingKeys: String, CodingKey {
-                case type = "@type"
-                case id
-                case isRequired
-                case title
-                case value
-                case isMultiline
-                case maxLength
-            }
+extension O365ConnectorCard.ActionCardAction.Input {
+    /// Use this input type when you need users to provide free text, such as the response to a survey question.\
+    ///
+    /// ```
+    /// {
+    ///   "@type": "TextInput",
+    ///   "id": "comment",
+    ///   "isMultiline": true,
+    ///   "title": "Input's title property"
+    /// }
+    /// ```
+    public struct TextInput: Codable {
+        /// must be TextInput, DateInput, or MultichoiceInput
+        public let type: InputType
+        /// Uniquely identifies the input so it is possible to reference it in the URL or body of an HttpPOST action. See Input value substitution.
+        public let id: String
+        /// Indicates whether users are required to type a value before they are able to take an action that would take the value of the input as a parameter.
+        public let isRequired: Bool?
+        /// Defines a title for the input.
+        public let title: String
+        /// Defines the initial value of the input. For multi-choice inputs, value must be equal to the value property of one of the input's choices.
+        public let value: String?
+        /// Indicates whether the text input should accept multiple lines of text.
+        public let isMultiline: Bool
+        /// Indicates the maximum number of characters that can be entered.
+        public let maxLength: Int?
+        
+        public init(id: String, isRequired: Bool?, title: String, value: String?, isMultiline: Bool, maxLength: Int?) {
+            self.type = .text
+            self.id = id
+            self.isRequired = isRequired
+            self.title = title
+            self.value = value
+            self.isMultiline = isMultiline
+            self.maxLength = maxLength
         }
         
-        /// Use this input type when you need users to provide free text, such as the response to a survey question.
-        ///
-        /// ```
-        /// {
-        ///   "@type": "DateInput",
-        ///   "id": "dueDate",
-        ///   "title": "Input's title property"
-        /// }
-        /// ```
-        public struct DateInput: Codable {
-            /// must be TextInput, DateInput, or MultichoiceInput
-            public let type: InputType
-            /// Uniquely identifies the input so it is possible to reference it in the URL or body of an HttpPOST action. See Input value substitution.
-            public let id: String
-            /// Indicates whether users are required to type a value before they are able to take an action that would take the value of the input as a parameter.
-            public let isRequired: Bool?
-            /// Defines a title for the input.
-            public let title: String
-            /// Defines the initial value of the input. For multi-choice inputs, value must be equal to the value property of one of the input's choices.
-            public let value: String?
-            /// Indicates whether the date input should allow for the selection of a time in addition to the date.
-            public let includeTime: Bool
-            
-            public init(id: String, isRequired: Bool?, title: String, value: String?, includeTime: Bool) {
-                self.type = .date
-                self.id = id
-                self.isRequired = isRequired
-                self.title = title
-                self.value = value
-                self.includeTime = includeTime
-            }
-            
-            enum CodingKeys: String, CodingKey {
-                case type = "@type"
-                case id
-                case isRequired
-                case title
-                case value
-                case includeTime
-            }
+        enum CodingKeys: String, CodingKey {
+            case type = "@type"
+            case id
+            case isRequired
+            case title
+            case value
+            case isMultiline
+            case maxLength
+        }
+    }
+    
+    /// Use this input type when you need users to provide free text, such as the response to a survey question.
+    ///
+    /// ```
+    /// {
+    ///   "@type": "DateInput",
+    ///   "id": "dueDate",
+    ///   "title": "Input's title property"
+    /// }
+    /// ```
+    public struct DateInput: Codable {
+        /// must be TextInput, DateInput, or MultichoiceInput
+        public let type: InputType
+        /// Uniquely identifies the input so it is possible to reference it in the URL or body of an HttpPOST action. See Input value substitution.
+        public let id: String
+        /// Indicates whether users are required to type a value before they are able to take an action that would take the value of the input as a parameter.
+        public let isRequired: Bool?
+        /// Defines a title for the input.
+        public let title: String
+        /// Defines the initial value of the input. For multi-choice inputs, value must be equal to the value property of one of the input's choices.
+        public let value: String?
+        /// Indicates whether the date input should allow for the selection of a time in addition to the date.
+        public let includeTime: Bool
+        
+        public init(id: String, isRequired: Bool?, title: String, value: String?, includeTime: Bool) {
+            self.type = .date
+            self.id = id
+            self.isRequired = isRequired
+            self.title = title
+            self.value = value
+            self.includeTime = includeTime
         }
         
-        /// Use this input type when you need users to select from a list of pre-defined choices, such as a bug status, yes/no/maybe, etc.
-        ///
-        /// ```
-        /// {
-        ///   "@type": "MultichoiceInput",
-        ///   "id": "list",
-        ///   "title": "Pick an option",
-        ///   "isMultiSelect": true, // optional
-        ///   "style": "expanded", // optional
-        ///   "choices": [
-        ///     { "display": "Choice 1", "value": "1" },
-        ///     { "display": "Choice 2", "value": "2" },
-        ///     { "display": "Choice 3", "value": "3" }
-        ///   ]
-        /// }
-        /// ```
-        public struct MultichoiceInput: Codable {
-            /// must be TextInput, DateInput, or MultichoiceInput
-            public let type: InputType
-            /// Uniquely identifies the input so it is possible to reference it in the URL or body of an HttpPOST action. See Input value substitution.
-            public let id: String
-            /// Indicates whether users are required to type a value before they are able to take an action that would take the value of the input as a parameter.
-            public let isRequired: Bool?
-            /// Defines a title for the input.
-            public let title: String
-            /// Defines the initial value of the input. For multi-choice inputs, value must be equal to the value property of one of the input's choices.
-            public let value: String?
-            /// Defines the values that can be selected for the multichoice input.
-            public let choices: [Choice]
-            /// If set to true, indicates that the user can select more than one choice.
-            /// The specified choices will be displayed as a list of checkboxes. Default value is false.
-            public let isMultiSelect: Bool?
-            /// When isMultiSelect is false, setting the style property to expanded will instruct the host application to try and display all choices on the screen, typically using a set of radio buttons.
-            public let style: Style?
+        enum CodingKeys: String, CodingKey {
+            case type = "@type"
+            case id
+            case isRequired
+            case title
+            case value
+            case includeTime
+        }
+    }
+    
+    /// Use this input type when you need users to select from a list of pre-defined choices, such as a bug status, yes/no/maybe, etc.
+    ///
+    /// ```
+    /// {
+    ///   "@type": "MultichoiceInput",
+    ///   "id": "list",
+    ///   "title": "Pick an option",
+    ///   "isMultiSelect": true, // optional
+    ///   "style": "expanded", // optional
+    ///   "choices": [
+    ///     { "display": "Choice 1", "value": "1" },
+    ///     { "display": "Choice 2", "value": "2" },
+    ///     { "display": "Choice 3", "value": "3" }
+    ///   ]
+    /// }
+    /// ```
+    public struct MultichoiceInput: Codable {
+        /// must be TextInput, DateInput, or MultichoiceInput
+        public let type: InputType
+        /// Uniquely identifies the input so it is possible to reference it in the URL or body of an HttpPOST action. See Input value substitution.
+        public let id: String
+        /// Indicates whether users are required to type a value before they are able to take an action that would take the value of the input as a parameter.
+        public let isRequired: Bool?
+        /// Defines a title for the input.
+        public let title: String
+        /// Defines the initial value of the input. For multi-choice inputs, value must be equal to the value property of one of the input's choices.
+        public let value: String?
+        /// Defines the values that can be selected for the multichoice input.
+        public let choices: [Choice]
+        /// If set to true, indicates that the user can select more than one choice.
+        /// The specified choices will be displayed as a list of checkboxes. Default value is false.
+        public let isMultiSelect: Bool?
+        /// When isMultiSelect is false, setting the style property to expanded will instruct the host application to try and display all choices on the screen, typically using a set of radio buttons.
+        public let style: Style?
+        
+        public init(id: String, isRequired: Bool?, title: String, value: String?, choices: [Choice], isMultiSelect: Bool?, style: Style?) {
+            self.type = .multichoice
+            self.id = id
+            self.isRequired = isRequired
+            self.title = title
+            self.value = value
+            self.choices = choices
+            self.isMultiSelect = isMultiSelect
+            self.style = style
+        }
+        
+        enum CodingKeys: String, CodingKey {
+            case type = "@type"
+            case id
+            case isRequired
+            case title
+            case value
+            case choices
+            case isMultiSelect
+            case style
+        }
+        
+        public enum Style: String, Codable {
+            case normal
+            case expanded
+        }
+        
+        public struct Choice: Codable {
+            public let display: String
+            public let value: String
             
-            public init(id: String, isRequired: Bool?, title: String, value: String?, choices: [Choice], isMultiSelect: Bool?, style: Style?) {
-                self.type = .multichoice
-                self.id = id
-                self.isRequired = isRequired
-                self.title = title
+            public init(display: String, value: String) {
+                self.display = display
                 self.value = value
-                self.choices = choices
-                self.isMultiSelect = isMultiSelect
-                self.style = style
-            }
-            
-            enum CodingKeys: String, CodingKey {
-                case type = "@type"
-                case id
-                case isRequired
-                case title
-                case value
-                case choices
-                case isMultiSelect
-                case style
-            }
-            
-            public enum Style: String, Codable {
-                case normal
-                case expanded
-            }
-            
-            public struct Choice: Codable {
-                public let display: String
-                public let value: String
-                
-                public init(display: String, value: String) {
-                    self.display = display
-                    self.value = value
-                }
             }
         }
     }

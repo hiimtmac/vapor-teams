@@ -26,12 +26,12 @@ public struct ThumbnailCard: CardType {
     public let title: String
     
     public init(
-        buttons: [CardAction],
-        images: [CardImage],
+        title: String,
         subtitle: String,
-        tap: CardAction,
         text: String,
-        title: String
+        images: [CardImage],
+        buttons: [CardAction],
+        tap: CardAction
     ) {
         self.buttons = buttons
         self.images = images

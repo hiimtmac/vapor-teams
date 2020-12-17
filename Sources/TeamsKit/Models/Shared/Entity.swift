@@ -1,6 +1,7 @@
 import Foundation
 
 public enum EntityType: String, Codable {
+    /// decoded from teams is `mention`, but needs to be `Mention` when encoded back
     case mention
     case clientInfo
     case place = "Place"
@@ -10,7 +11,7 @@ public enum EntityType: String, Codable {
 /// Metadata object pertaining to an activity.
 public enum Entity: Codable {
     case mention(Mention)
-    case clientInfo((ClientInfo))
+    case clientInfo(ClientInfo)
     case place(Place)
     case geoCoordinates(GeoCoordinates)
     
@@ -19,7 +20,7 @@ public enum Entity: Codable {
     }
     
     public func encode(to encoder: Encoder) throws {
-        var container = encoder.unkeyedContainer()
+        var container = encoder.singleValueContainer()
         switch self {
         case .mention(let mention): try container.encode(mention)
         case .clientInfo(let clientInfo): try container.encode(clientInfo)
@@ -37,6 +38,26 @@ public enum Entity: Codable {
         case .place: self = .place(try Place(from: decoder))
         case .geoCoordinates: self = .geoCoordinates(try GeoCoordinates(from: decoder))
         }
+    }
+    
+    public static func mention(mentioned: ChannelAccount, text: String?) -> Self {
+        let entity = Mention(mentioned: mentioned, text: text)
+        return .mention(entity)
+    }
+    
+    public static func clientInfo(locale: String, country: String, platform: String, timezone: String) -> Self {
+        let entity = ClientInfo(locale: locale, country: country, platform: platform, timezone: timezone)
+        return .clientInfo(entity)
+    }
+    
+    public static func place(address: Place.Address, geo: GeoCoordinates, hasMap: Place.HasMap, name: String) -> Self {
+        let entity = Place(address: address, geo: geo, hasMap: hasMap, name: name)
+        return .place(entity)
+    }
+    
+    public static func geoCoordinates(elevation: Double, latitude: Double, longitude: Double, name: String) -> Self {
+        let entity = GeoCoordinates(elevation: elevation, latitude: latitude, longitude: longitude, name: name)
+        return .geoCoordinates(entity)
     }
 }
 
@@ -68,12 +89,12 @@ extension Entity {
         /// Not all channels set this property.
         public let text: String?
         /// This object's type.
-        public let type: EntityType
+        public let type: String
         
         public init(mentioned: ChannelAccount, text: String?) {
             self.mentioned = mentioned
             self.text = text
-            self.type = .mention
+            self.type = "Mention"
         }
     }
 }
@@ -90,14 +111,14 @@ extension Entity {
         /// Name of the location.
         public let name: String
         /// The type of this object.
-        public let type: EntityType
+        public let type: String
         
         public init(elevation: Double, latitude: Double, longitude: Double, name: String) {
             self.elevation = elevation
             self.latitude = latitude
             self.longitude = longitude
             self.name = name
-            self.type = .geoCoordinates
+            self.type = "GeoCoordinates"
         }
     }
 }
@@ -114,15 +135,14 @@ extension Entity {
         /// Name of the place.
         public let name: String
         /// This object's type.
-        /// Always set to Place.
-        public let type: EntityType
+        public let type: String
         
         public init(address: Address, geo: GeoCoordinates, hasMap: HasMap, name: String) {
             self.address = address
             self.geo = geo
             self.hasMap = hasMap
             self.name = name
-            self.type = .place
+            self.type = "Place"
         }
         
         public enum HasMap: Codable {

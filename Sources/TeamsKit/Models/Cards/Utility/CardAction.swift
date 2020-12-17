@@ -11,22 +11,22 @@ public struct CardAction: Codable {
     /// Text for the action.
     public let text: String?
     /// Text description which appears on the button.
-    public let title: String
+    public let title: String?
     /// Type of action to perform.
     public let type: CardActionType
     /// Supplementary parameter for the action.
     /// The behavior of this property will vary according to the action type.
     /// For more information, see Add rich card attachments to messages.
-    //https://github.com/Microsoft/botframework-sdk/blob/main/specs/botframework-activity/botframework-activity.md#message-back
-//    let value: object
+    public let value: String
     
     public init(
-        channelData: String?,
-        displayText: String?,
-        image: URL?,
-        text: String?,
-        title: String,
-        type: CardActionType
+        type: CardActionType,
+        value: String,
+        title: String? = nil,
+        text: String? = nil,
+        channelData: String? = nil,
+        displayText: String? = nil,
+        image: URL? = nil
     ) {
         self.channelData = channelData
         self.displayText = displayText
@@ -34,11 +34,32 @@ public struct CardAction: Codable {
         self.text = text
         self.title = title
         self.type = type
+        self.value = value
+    }
+    
+    public init<T>(
+        type: CardActionType,
+        value: T,
+        title: String? = nil,
+        text: String? = nil,
+        channelData: String? = nil,
+        displayText: String? = nil,
+        image: URL? = nil,
+        encoder: JSONEncoder = .init()
+    ) throws where T: Encodable {
+        self.channelData = channelData
+        self.displayText = displayText
+        self.image = image
+        self.text = text
+        self.title = title
+        self.type = type
+        self.value = try String(decoding: encoder.encode(value), as: UTF8.self)
     }
 }
 
 extension CardAction {
     public enum CardActionType: String, Codable {
+        case messageBack
         /// URL to be opened in the built-in browser
         case openUrl
         /// Text of the message to send to the bot (from the user who clicked the button or tapped the card).

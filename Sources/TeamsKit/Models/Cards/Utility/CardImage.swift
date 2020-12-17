@@ -9,9 +9,23 @@ public struct CardImage: Codable {
     /// URL to the source of the image or the base64 binary of the image (for example, data:image/png;base64,iVBORw0KGgo...).
     public let url: URLSource
     
-    public init(url: URLSource, alt: String?, tap: CardAction?) {
+    public init(
+        url: URL,
+        alt: String? = nil,
+        tap: CardAction? = nil
+    ) {
         self.alt = alt
         self.tap = tap
-        self.url = url
+        self.url = .url(url)
+    }
+    
+    public init(
+        base64: String,
+        alt: String? = nil,
+        tap: CardAction? = nil
+    ) {
+        self.alt = alt
+        self.tap = tap
+        self.url = .base64(base64)
     }
 }
