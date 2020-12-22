@@ -12,7 +12,6 @@ defer { application.shutdown() }
 application
     .grouped(OutgoingWebhookAuthenticator(secretKey: Environment.get(.TEXT_SECRET)))
     .post("outgoing-text") { (req: Request) throws -> Activity in
-        print(String(decoding: Data(buffer: req.body.data!), as: UTF8.self))
         let message = try req.content.decode(Activity.self, using: JSONDecoder.teams)
         
         let act = Activity.text(replyingTo: message)
