@@ -1,40 +1,8 @@
-# teams-kit
-
-A description of this package.
-
-```swift
-dependencies: [
-    .package(url: "https://github.com/hiimtmac/teams-kit.git", .branch("main"))
-],
-targets: [
-    .target(name: "Example", dependencies: [
-        .product(name: "VaporTeams", package: "eams-kit"),
-        .product(name: "TeamsKit", package: "teams-kit") // if you want to use vapor
-        .product(name: "Vapor", package: "vapor") // if you want to use vapor
-    ])
-]
-```
+# vapor-teams
 
 > pre-release and subject to change
 
-## Outgoing Webhook
-
-[See here](https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-outgoing-webhook) how to setup a outgoing webhook
-
-### Validate Teams Clients
-
-Make sure to validate the post body to make sure it actually comes from a teams client. This can be done using an extension on `Data`:
-
-```swift
-Data("my data".utf8).validate(
-    code: hmacCode, // this will come in header Authorization: "HMAC sd...d="
-    withSecret: teamsSecret // this comes from teams when you setup webhook
-)
-```
-
-> [Verify the outgoing webhook hmac token](https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-outgoing-webhook#2-create-a-method-to-verify-the-outgoing-webhook-hmac-token)
-
-### Vapor Authenticator
+## Vapor Authenticator
 
 Use the `OutgoingWebhookAuthenticator` to guard your routes to ensure they are only accessed by valid teams clients
 
@@ -42,14 +10,6 @@ Use the `OutgoingWebhookAuthenticator` to guard your routes to ensure they are o
 application
     .grouped(OutgoingWebhookAuthenticator(secretKey: teamsSecret))
     .post("outgoing-webhook") { ... }
-```
-
-### Decoding Activity
-
-Decode post body `Activity` from teams using the custom `JSONDecoder.teams` decoder (handles that way microsoft encodes their dates/timestamps)
-
-```swift
-let message = try req.content.decode(Activity.self, using: JSONDecoder.teams)
 ```
 
 ### Reponses
