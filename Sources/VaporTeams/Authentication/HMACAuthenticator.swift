@@ -1,15 +1,16 @@
 import Vapor
 
 /// Helper for creating authentication middleware using the HMAC authorization header.
-public protocol HMACAuthenticator: RequestAuthenticator {
-    func authenticate(hmac: HMACAuthorization, for request: Request) -> EventLoopFuture<Void>
+public protocol HMACAuthenticator: AsyncRequestAuthenticator {
+    func authenticate(hmac: HMACAuthorization, for request: Request) throws
 }
 
 extension HMACAuthenticator {
-    public func authenticate(request: Request) -> EventLoopFuture<Void> {
+    public func authenticate(request: Request) async throws {
         guard let hmacAuthorization = request.headers.hmacAuthorization else {
-            return request.eventLoop.makeSucceededFuture(())
+            throw Abort(.unauthorized, reason: "Missing authorization")
         }
-        return self.authenticate(hmac: hmacAuthorization, for: request)
+        
+        return try self.authenticate(hmac: hmacAuthorization, for: request)
     }
 }

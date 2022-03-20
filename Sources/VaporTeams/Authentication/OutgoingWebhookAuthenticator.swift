@@ -8,19 +8,15 @@ public struct OutgoingWebhookAuthenticator: HMACAuthenticator {
         self.secretKey = secretKey
     }
     
-    public func authenticate(hmac: HMACAuthorization, for request: Request) -> EventLoopFuture<Void> {
-        request.eventLoop
-            .submit {
-                guard let buffer = request.body.data else {
-                    throw Abort(.badRequest, reason: "Missing body")
-                }
-                
-                try Data(buffer: buffer).validate(
-                    code: hmac.token,
-                    withSecret: secretKey
-                )
-            }
-            .transform(to: ())
+    public func authenticate(hmac: HMACAuthorization, for request: Request) throws {
+        guard let buffer = request.body.data else {
+            throw Abort(.badRequest, reason: "Missing body")
+        }
+        
+        try Data(buffer: buffer).validate(
+            code: hmac.token,
+            withSecret: secretKey
+        )
     }
 }
 
