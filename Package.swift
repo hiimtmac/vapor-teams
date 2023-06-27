@@ -13,7 +13,7 @@ let package = Package(
         .library(name: "VaporTeams", targets: ["VaporTeams"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/vapor/vapor.git", from: "4.55.0"),
+        .package(url: "https://github.com/vapor/vapor.git", from: "4.77.0"),
         .package(url: "https://github.com/hiimtmac/chat-kit.git", branch: "main"),
     ],
     targets: [
