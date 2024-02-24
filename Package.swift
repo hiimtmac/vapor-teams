@@ -1,4 +1,4 @@
-// swift-tools-version:5.8
+// swift-tools-version:5.9
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -13,7 +13,7 @@ let package = Package(
         .library(name: "VaporTeams", targets: ["VaporTeams"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/vapor/vapor.git", from: "4.81.0"),
+        .package(url: "https://github.com/vapor/vapor.git", from: "4.92.0"),
         .package(url: "https://github.com/hiimtmac/chat-kit.git", branch: "main"),
     ],
     targets: [
@@ -22,10 +22,17 @@ let package = Package(
             .product(name: "TeamsKit", package: "chat-kit"),
             .product(name: "Vapor", package: "vapor")
         ]),
-        .target(name: "VaporTeams", dependencies: [
-            .product(name: "TeamsKit", package: "chat-kit"),
-            .product(name: "Vapor", package: "vapor")
-        ]),
+        .target(
+            name: "VaporTeams",
+            dependencies: [
+                .product(name: "TeamsKit", package: "chat-kit"),
+                .product(name: "Vapor", package: "vapor")
+            ],
+            swiftSettings: [
+                .enableUpcomingFeature("ExistentialAny"),
+                .enableUpcomingFeature("StrictConcurrency")
+            ]
+        ),
         .testTarget(name: "TeamsKitTests", dependencies: [
             .product(name: "XCTVapor", package: "vapor")
         ])
