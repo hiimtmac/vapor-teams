@@ -8,7 +8,7 @@ public final class TenantMiddleware: AsyncMiddleware {
         self.tenant = tenant
     }
     
-    public func respond(to request: Request, chainingTo next: AsyncResponder) async throws -> Response {
+    public func respond(to request: Request, chainingTo next: any AsyncResponder) async throws -> Response {
         let body = try request.content.decode(TenantPayload.self)
         
         guard body.channelData.tenant == self.tenant else {
