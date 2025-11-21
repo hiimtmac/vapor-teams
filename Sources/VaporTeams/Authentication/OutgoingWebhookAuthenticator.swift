@@ -20,7 +20,7 @@ public struct OutgoingWebhookAuthenticator: HMACAuthenticator {
     }
 }
 
-extension Data.ValidationError: AbortError {
+extension Data.ValidationError: @retroactive AbortError {
     public var status: HTTPResponseStatus {
         switch self {
         case .secretKey: return .internalServerError
